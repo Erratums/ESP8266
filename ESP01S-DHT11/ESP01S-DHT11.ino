@@ -1,5 +1,5 @@
 /*
- * Smart Plug.h
+ * ESP01S-DHT11.ino
  * Developed by Erratum Solutions
  * Contact us @ support@erratums.com
  * https://erratums.com
