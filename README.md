@@ -1,4 +1,4 @@
-The ESP8266 is a low-cost Wi-Fi microchip with full TCP/IP stack and microcontroller capability produced by manufacturer Espressif Systems in Shanghai, China. [Learn More](https://en.wikipedia.org/wiki/ESP8266)
+The ESP8266 is a low-cost Wi-Fi microchip with full TCP/IP stack and microcontroller capability produced by manufacturer Espressif Systems in Shanghai, China. [Learn More](https://github.com/Erratums/ESP8266/wiki)
 
 ## Buy Online Now
 * [Buy from our store](https://erratums.com/ocart2/)
