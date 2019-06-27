@@ -18,8 +18,10 @@ const char cMyWiFiPassword[] = "trytest1";
 const char cMQTTSubTopic[] = "ESUniqueTopic/Sub"; // Change this to a unique code
 
 // This can only be used for test. 
-// Provided by http://www.hivemq.com
-const PROGMEM char cMQTTServerAddr[] = "broker.mqttdashboard.com";
+// Provided by https://beebotte.com
+const PROGMEM char cMQTTServerAddr[] = "mqtt.beebotte.com";
+const PROGMEM char cMQTTChannelName[] = "erratums_gitrepo";
+const PROGMEM char cMQTTToken[] = "iamtkn_2TpqgXUQmLzo31T7";
 const int cMQTTServerPort = 1883;
 
 const byte cRelayPin = 0;
@@ -102,8 +104,8 @@ void mqttReconnect() {
   String sClientID = "__ESMQTT_ClntID_" + String(random(0xffff), HEX);
 
   // for now simply use above generated Client ID as Client ID and user name. 
-  if (mqttClient.connect(sClientID.c_str(), sClientID.c_str(), "")) {
-    mqttClient.subscribe(cMQTTSubTopic);    
+  if (mqttClient.connect(sClientID.c_str(), cMQTTToken, cMQTTToken)) {
+    mqttClient.subscribe(cMQTTSubTopic);
     Serial.println(F("connected"));
   } else {
     Serial.print(F("failed, rc="));
