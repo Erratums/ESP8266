@@ -1,6 +1,6 @@
     
 /*
- * ESP01S-Relay-Module-1Ch.ino
+ * ESP01S-Relay-Module-1Ch Basic
  * Developed by Erratum Solutions
  * Contact us @ support@erratums.com
  * https://erratums.com

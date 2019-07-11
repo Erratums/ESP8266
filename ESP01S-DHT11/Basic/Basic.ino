@@ -1,5 +1,5 @@
 /*
- * ESP01S-DHT11.ino
+ * ESP01S DHT11 Basic Sample
  * Developed by Erratum Solutions
  * Contact us @ support@erratums.com
  * https://erratums.com
