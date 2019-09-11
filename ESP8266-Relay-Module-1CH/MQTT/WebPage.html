@@ -23,24 +23,74 @@ button {
 }
 button:hover {opacity: 0.8;}
 .container {padding: 16px;}
-.container1 {padding: 8px; }
+.container1 {padding: 8px;}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {background-color: #2196F3;}
+input:focus + .slider {box-shadow: 0 0 1px #2196F3;}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {border-radius: 34px;}
+.slider.round:before {border-radius: 50%;}
 </style></head><body>
 
 <div class="container" style="background-color:#ffffff">
 <table width="100%">
-	<tr>
-		<td>
-			<form action="/turnon" method="get">
-			  <div class="container"> <button type="submit" class="btnTurnOn">Turn On Relay</button> </div>
-			</form>
-		</td>
-		<td></td>
-		<td>
-			<form action="/turnoff" method="get">
-			  <div class="container"> <button type="submit" class="btnTurnOff">Turn Off Relay</button> </div>
-			</form>
-		</td>
-	</tr>
+  <tr>
+    <td>
+      <form action="/turnon" method="get">
+        <div class="container"> <button type="submit" class="btnTurnOn">Turn On Relay</button> </div>
+      </form>
+    </td>
+    <td></td>
+    <td>
+      <form action="/turnoff" method="get">
+        <div class="container"> <button type="submit" class="btnTurnOff">Turn Off Relay</button> </div>
+      </form>
+    </td>
+  </tr>
 </table>
 <form action="/saveSett" method="post">
   <div class="container">
@@ -54,13 +104,55 @@ button:hover {opacity: 0.8;}
     <button type="submit" class="savebtn">Save</button>
   </div>
 </form>
+<form action="/saveHotspot" method="post">
+  <div class="container">
+    <h2 align="center">Hotspot Settings</h2>
+    <label for="hp_ssid"><b>Wi-Fi Name</b></label>
+    <input type="text" placeholder="Enter Your Wi-Fi Name" name="hp_ssid" id="hp_ssid">
+
+    <label for="hp_psw"><b>Password</b></label>
+    <input type="password" placeholder="Enter Your Wi-Fi Password" name="hp_psw" id="hp_psw">
+
+	<table>
+		<tr>
+			<td><label for="hp_active"><b>Active</b></label></td>
+			<td></td>
+			<td>
+				<label class="switch">	
+					<input type="checkbox" checked id="hp_active">
+					<span class="slider round"></span>	
+				</label>
+			</td>			
+		</tr>
+	</table>	
+
+    <button type="submit" class="savebtn">Save</button>
+  </div>
+</form>
 <form action="/saveTopic" method="post">
   <div class="container">
-	<h2 align="center">MQTT Settings</h2>
+  <h2 align="center">MQTT Settings</h2>
     <label for="ssid"><b>Topic Name</b></label>
-    <input type="text" placeholder="Enter Topic Name" name="mqttTopic">
+    <input type="text" placeholder="Enter Topic Name" name="mqttTopic" id="mqttTopic">
     <button type="submit" class="savebtn">Save</button>
   </div>
 </form>
 </div>
+
+<script>
+    var varURL = new URL(window.location.href);
+	
+    var varHPName = varURL.searchParams.get("hpname");
+	if (varHPName != null) document.getElementById('hp_ssid').value = varHPName;
+	
+	var varHPPass = varURL.searchParams.get("hppass");
+	if (varHPPass != null) document.getElementById('hp_psw').value = varHPPass;
+	
+	var varHPActive = varURL.searchParams.get("hpactive");
+	if (varHPPass != null) document.getElementById('hp_active').checked = (varHPActive == "true");
+	
+	var varMQTTTopic = varURL.searchParams.get("topicName");
+	if (varMQTTTopic != null) document.getElementById('mqttTopic').value = varMQTTTopic;
+</script>
+
 </body></html>

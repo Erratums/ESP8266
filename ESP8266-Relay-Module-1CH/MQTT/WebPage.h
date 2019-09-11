@@ -63,11 +63,23 @@ button:hover {opacity: 0.8;}
     <button type="submit" class="savebtn">Save</button>
   </div>
 </form>
+<form action="/saveHotspot" method="post">
+  <div class="container">
+    <h2 align="center">Hotspot Settings</h2>
+    <label for="hp_ssid"><b>Wi-Fi Name</b></label>
+    <input type="text" placeholder="Enter Your Wi-Fi Name" name="hp_ssid" id="hp_ssid">
+
+    <label for="hp_psw"><b>Password</b></label>
+    <input type="password" placeholder="Enter Your Wi-Fi Password" name="hp_psw" id="hp_psw">
+
+    <button type="submit" class="savebtn">Save</button>
+  </div>
+</form>
 <form action="/saveTopic" method="post">
   <div class="container">
   <h2 align="center">MQTT Settings</h2>
     <label for="ssid"><b>Topic Name</b></label>
-    <input type="text" placeholder="Enter Topic Name" name="mqttTopic">
+    <input type="text" placeholder="Enter Topic Name" name="mqttTopic" id="mqttTopic">
     <button type="submit" class="savebtn">Save</button>
   </div>
 </form>

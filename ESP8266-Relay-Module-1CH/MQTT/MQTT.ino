@@ -11,6 +11,7 @@
 #include <WiFiClient.h>
 #include <PubSubClient.h>
 #include <EEPROM.h>
+#include <SoftwareSerial.h>
 #include <ESP8266WebServer.h>
 #include "WebPage.h"
 
@@ -31,16 +32,26 @@ const byte cRelayPin = 4;
 const byte cRelayStateLow = LOW;
 const byte cRelayStateHigh = HIGH;
 
+SoftwareSerial resetSerial(0, 12);
+int iWiFiConnectCount;
+
 WiFiClient mqttWifi;
 ESP8266WebServer server(80);
 PubSubClient mqttClient(mqttWifi);
 
 void setup() {
+  iWiFiConnectCount = 0;
+
   Serial.begin(9600);
+  resetSerial.begin(9600);
   while (!Serial);
+  while (!resetSerial);
 
   delay(100);
   EEPROM.begin(512);
+  delay(500);
+  // Try to reset before nitialization { Ajmal }
+  WaitForReset();
   InitAccessPoint();
   WiFi.setAutoConnect(true);
   
@@ -71,11 +82,41 @@ void loop() {
   mqttClient.loop();
 }
 
+void WaitForReset() {
+  // Do resetting if Serial Receive "_ES_RESET" { Ajmal }
+  delay(1000);
+  String sData = "";
+  int iResetCntr = 30; // 30x50 => 3000. Wait for 3 secs { Ajmal }
+  Serial.println(F("_ES_RESET"));
+  while (true) {
+    delay(50);
+    iResetCntr--;
+    Serial.print(F("Count: ")); 
+    Serial.println(iResetCntr);
+    
+    if (iResetCntr < 0) break;
+    if (resetSerial.available() > 0) {
+      char sChar = (char) resetSerial.read();
+      sData = sData + sChar;
+      if (sData.equals(F("_ES_RESET"))) {
+        writeToMem(0, "F");
+        Serial.println(F("Device Configuration Reset Successfully"));
+        break;
+      }
+    }
+  }  
+}
+
 void InitAccessPoint() {
   Serial.println();
   Serial.println(F("Configuring access point..."));
 
-  WiFi.softAP(cWiFiName, cWiFiPass);
+  // Set WiFi Hotspot only if not exist { Ajmal }
+  if (!readFromMem(1).equals("T")) {
+    writeToMem(0, "T");
+    WiFi.softAP(cWiFiName, cWiFiPass);
+    Serial.println(F("Default Hotspot Settings Applied"));
+  }
 
   IPAddress myIP = WiFi.softAPIP();
   Serial.print(F("AP IP address: "));
@@ -85,6 +126,7 @@ void InitAccessPoint() {
   server.on(F("/turnon"), handleTurnOn);
   server.on(F("/turnoff"), handleTurnOff);
   server.on(F("/saveTopic"), handleSaveTopic);
+  server.on(F("/saveHotspot"), handleSaveHotspot);
   server.onNotFound(handleNotFound);
   server.begin();
   Serial.println(F("HTTP server started"));
@@ -92,13 +134,21 @@ void InitAccessPoint() {
 
 void connectToMyWiFi() {
   Serial.println(F("Connecing to my WiFi router for Internet Access"));
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print('.');
+  while (true) {
+    delay(1);
+    iWiFiConnectCount--;
+
+    // Check WiFi connection only once in 500 milli sec { Ajmal }
+    if (iWiFiConnectCount <= 0) {
+      iWiFiConnectCount = 3000;
+      if (WiFi.status() == WL_CONNECTED) break;
+      Serial.print('.');
+    }
     
     // call handleClient, so that if there is any request to server it will handle
     server.handleClient();
   }
+  
   Serial.println();
   Serial.println(F("WiFi connected"));
   Serial.print(F("IP address: "));
@@ -150,7 +200,7 @@ void mqttReconnect() {
 }
 
 String getMQTTTopicName() {
-  String sTopicName = readFromMem(1);
+  String sTopicName = readFromMem(2);
   sTopicName.trim();
   if (!sTopicName.equals(""))
     return sTopicName;
@@ -158,7 +208,7 @@ String getMQTTTopicName() {
   return cMQTTSubTopic;
 }
 
-void handleRoot() {
+void handleRoot() {  
   server.send(200, "text/html", cWebPageServer);
 }
 
@@ -192,7 +242,7 @@ void handleNotFound() {
 }
 
 void handleSave() {
-  boolean bWiFiSaved = false;
+  boolean bWiFiSaved = false;  
   String sTemp = server.arg(F("ssid"));
   sTemp.trim();
   if (sTemp.length() != 0) {
@@ -201,15 +251,14 @@ void handleSave() {
 
     sTemp = server.arg(F("psw"));
     sTemp.trim();
-    if (sTemp.length() != 0) {
-      char pass[sTemp.length() + 1];
-      sTemp.toCharArray(pass, sTemp.length() + 1);
+    char pass[sTemp.length() + 1];
+    sTemp.toCharArray(pass, sTemp.length() + 1);
 
-      WiFi.begin(userName, pass);
-      server.send(200, "text/html", F("<HTML><HEAD></HEAD><BODY><CENTER><H1>Wi-Fi Settings Saved</H1></CENTER></BODY></HTML>"));
-      Serial.println(F("Wi-Fi credentials updated."));
-      bWiFiSaved = true;
-    }
+    WiFi.begin(userName, pass);
+    server.send(200, "text/html", F("<HTML><HEAD></HEAD><BODY><CENTER><H1>Wi-Fi Settings Saved</H1></CENTER></BODY></HTML>"));
+    Serial.println(F("Wi-Fi credentials updated."));
+    connectToMyWiFi();
+    bWiFiSaved = true;
   }
 
   if (!bWiFiSaved) {
@@ -218,11 +267,41 @@ void handleSave() {
   }
 }
 
+void handleSaveHotspot() {
+  boolean bHotspotSaved = false;  
+  String sTemp = server.arg(F("hp_ssid"));
+  sTemp.trim();
+  if (sTemp.length() != 0) {
+    char userName[sTemp.length() + 1];
+    sTemp.toCharArray(userName, sTemp.length() + 1);
+
+    sTemp = server.arg(F("hp_psw"));
+    sTemp.trim();
+    if (sTemp.length() > 7) {
+      char pass[sTemp.length() + 1];
+      sTemp.toCharArray(pass, sTemp.length() + 1);
+      bHotspotSaved = WiFi.softAP(userName, pass);      
+    } else {
+      server.send(200, "text/html", F("<HTML><HEAD></HEAD><BODY><CENTER><H1>Hotspot password should be atleast 8 characters</H1></CENTER></BODY></HTML>"));
+      Serial.println(F("Hotspot password should be atleast 8 characters"));
+      return;
+    }
+  }
+  
+  if (!bHotspotSaved) {
+    server.send(200, "text/html", F("<HTML><HEAD></HEAD><BODY><CENTER><H1>Hotspot Settings Not Changed</H1></CENTER></BODY></HTML>"));
+    Serial.println(F("Hotspot credentials updated."));
+  } else {
+    server.send(200, "text/html", F("<HTML><HEAD></HEAD><BODY><CENTER><H1>Hotspot Settings Saved</H1></CENTER></BODY></HTML>"));
+    Serial.println(F("Hotspot credentials updated."));
+  }
+}
+
 void handleSaveTopic() {
   String sTemp = server.arg(F("mqttTopic"));
   sTemp.trim();
   if (sTemp.length() != 0) {
-    if (writeToMem(0, sTemp) > 0) {
+    if (writeToMem(1, sTemp) > 0) {
       server.send(200, "text/html", F("<HTML><HEAD></HEAD><BODY><CENTER><H1>MQTT Settings Saved</H1></CENTER></BODY></HTML>"));
     }
   }
