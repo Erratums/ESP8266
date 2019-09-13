@@ -14,6 +14,7 @@
 #include <SoftwareSerial.h>
 #include <ESP8266WebServer.h>
 #include "WebPage.h"
+#include "CoreUtils.h"
 
 const char cWiFiName[] = "ES-1CH-Relay";
 const char cWiFiPass[] = "trytest123";
@@ -33,15 +34,13 @@ const byte cRelayStateLow = LOW;
 const byte cRelayStateHigh = HIGH;
 
 SoftwareSerial resetSerial(0, 12);
-int iWiFiConnectCount;
+EDelay dlyWiFiConn(3000);
 
 WiFiClient mqttWifi;
 ESP8266WebServer server(80);
 PubSubClient mqttClient(mqttWifi);
 
 void setup() {
-  iWiFiConnectCount = 0;
-
   Serial.begin(9600);
   resetSerial.begin(9600);
   while (!Serial);
@@ -135,12 +134,8 @@ void InitAccessPoint() {
 void connectToMyWiFi() {
   Serial.println(F("Connecing to my WiFi router for Internet Access"));
   while (true) {
-    delay(1);
-    iWiFiConnectCount--;
-
     // Check WiFi connection only once in 500 milli sec { Ajmal }
-    if (iWiFiConnectCount <= 0) {
-      iWiFiConnectCount = 3000;
+    if (dlyWiFiConn.canContinue()) {
       if (WiFi.status() == WL_CONNECTED) break;
       Serial.print('.');
     }
@@ -301,40 +296,8 @@ void handleSaveTopic() {
   String sTemp = server.arg(F("mqttTopic"));
   sTemp.trim();
   if (sTemp.length() != 0) {
-    if (writeToMem(1, sTemp) > 0) {
+    if (writeToMem(2, sTemp) > 0) {
       server.send(200, "text/html", F("<HTML><HEAD></HEAD><BODY><CENTER><H1>MQTT Settings Saved</H1></CENTER></BODY></HTML>"));
     }
   }
-}
-
-int writeToMem(int addrStart, String data) {
-  int iAddr;
-  for (iAddr = addrStart; iAddr < addrStart + data.length(); iAddr++) {
-    char chr = data.charAt(iAddr - addrStart);
-    EEPROM.write(iAddr, chr);
-  }
-
-  EEPROM.write(iAddr, '\r');
-  EEPROM.commit();
-  delay(100);
-  return iAddr;
-}
-
-String readFromMem(int wordIndex) {
-  String result = "";
-  int iCntr = 1;
-  boolean bFound = false;
-
-  for (int iAddr = 0; iAddr < EEPROM.length(); iAddr++) {
-    char chr = char(EEPROM.read(iAddr));
-    bFound = iCntr == wordIndex;
-    if (chr == '\r') {
-      if (bFound) return result;
-      iCntr++;
-    } else if (bFound) {
-      result += chr;
-    }
-  }
-
-  return "";
 }
