@@ -297,6 +297,7 @@ void handleSaveTopic() {
   sTemp.trim();
   if (sTemp.length() != 0) {
     if (writeToMem(2, sTemp) > 0) {
+      mqttClient.disconnect();
       server.send(200, "text/html", F("<HTML><HEAD></HEAD><BODY><CENTER><H1>MQTT Settings Saved</H1></CENTER></BODY></HTML>"));
     }
   }
