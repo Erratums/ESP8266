@@ -24,9 +24,9 @@ const char cMQTTSubTopic[] = "ESUniqueTopic/Sub"; // Change this to a unique cod
 
 // This can only be used for test. 
 // Provided by https://beebotte.com
-const PROGMEM char cMQTTServerAddr[] = "mqtt.beebotte.com";
-const PROGMEM char cMQTTChannelName[] = "erratums_gitrepo";
-const PROGMEM char cMQTTToken[] = "iamtkn_2TpqgXUQmLzo31T7";
+const char cMQTTServerAddr[] = "mqtt.beebotte.com";
+const char cMQTTChannelName[] = "erratums_gitrepo";
+const char cMQTTToken[] = "iamtkn_2TpqgXUQmLzo31T7";
 const int cMQTTServerPort = 1883;
 
 const byte cRelayPin = 4;
